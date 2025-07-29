@@ -7,7 +7,6 @@ from fastapi.responses import StreamingResponse
 import pandas as pd
 import io
 import logging
-from typing import Dict, Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,10 +21,10 @@ router = APIRouter()
     description="""
     Convert WGS84 geographic coordinates (latitude, longitude) to UTM Zone 40S projected coordinates.
     
-    - **latitude**: Latitude in decimal degrees (-90 to 90)
-    - **longitude**: Longitude in decimal degrees (-180 to 180) 
-    - **ellipsoid_height**: Optional ellipsoidal height in meters
-    
+    - latitude: Latitude in decimal degrees (-90 to 90)
+    - longitude: Longitude in decimal degrees (-180 to 180)
+    - ellipsoid_height: Optional ellipsoidal height in meters
+
     Returns UTM coordinates with orthometric height and geoid separation.
     """,
     responses={
@@ -101,10 +100,10 @@ def wgs84_to_utm40s(input: WGS84Input) -> UTM40SResponse:
     description="""
     Convert UTM Zone 40S projected coordinates to WGS84 geographic coordinates.
     
-    - **easting**: UTM easting coordinate in meters
-    - **northing**: UTM northing coordinate in meters
-    - **orthometric_height**: Optional orthometric height in meters
-    
+    - easting: UTM easting coordinate in meters
+    - northing: UTM northing coordinate in meters
+    - orthometric_height: Optional orthometric height in meters
+
     Returns WGS84 coordinates with ellipsoidal height and geoid separation.
     """,
     responses={
@@ -170,7 +169,7 @@ def utm40s_to_wgs84(input: UTM40SInput) -> WGS84Response:
     description="""
     Upload a CSV or Excel file containing WGS84 coordinates for batch conversion to UTM Zone 40S.
     
-    **Required columns:**
+    Required columns:
     - latitude: Latitude in decimal degrees
     - longitude: Longitude in decimal degrees
     - ellipsoid_height: Ellipsoidal height in meters (can be empty/null)
@@ -333,16 +332,16 @@ def upload_wgs84_csv(file: UploadFile = File(...)) -> StreamingResponse:
     summary="Batch convert UTM Zone 40S coordinates from file",
     description="""
     Upload a CSV or Excel file containing UTM Zone 40S coordinates for batch conversion to WGS84.
-    
-    **Required columns:**
+
+    Required columns:
     - easting: UTM easting coordinate in meters
     - northing: UTM northing coordinate in meters
-    
-    **Optional columns:**
+
+    Optional columns:
     - orthometric_height: Orthometric height in meters (can be empty/null, defaults to 0)
-    
-    **Supported file formats:** CSV (.csv), Excel (.xlsx, .xls)
-    
+
+    Supported file formats: CSV (.csv), Excel (.xlsx, .xls)
+
     Returns a CSV file with converted coordinates.
     """,
     responses={

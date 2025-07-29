@@ -5,7 +5,7 @@ A FastAPI-based service for converting coordinates between WGS84 geographic
 and UTM Zone 40S projected coordinate systems, with height datum transformations
 using EGM2008 geoid model.
 
-Author: Your Name
+Author: Talha Waheed
 Date: 2025
 Version: 1.0.0
 """
@@ -14,8 +14,9 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
+from contextlib import asynccontextmanager
 from routes import router
 from config import settings
 import logging
@@ -34,6 +35,34 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for FastAPI application.
+    Handles startup and shutdown events.
+    """
+    # Startup
+    logger.info("Starting Geospatial Coordinate Conversion API v1.0.0")
+    
+    # Validate geoid model on startup
+    try:
+        from services.geoid_handler import validate_geoid_model
+        geoid_info = validate_geoid_model(settings.GEOID_PATH)
+        logger.info(f"Geoid model validated: {geoid_info['file_path']}")
+    except Exception as e:
+        logger.warning(f"Geoid model validation failed: {e}")
+        logger.warning("API will start but height conversions may fail")
+    
+    yield
+    logger.info("Shutting down Geospatial Coordinate Conversion API")
+    try:
+        from services.geoid_handler import clear_geoid_cache
+        clear_geoid_cache()
+        logger.info("Cleared geoid model cache")
+    except Exception as e:
+        logger.warning(f"Error clearing cache: {e}")
+
+
 # Initialize FastAPI app with comprehensive metadata
 app = FastAPI(
     title="Geospatial Coordinate Conversion API",
@@ -41,27 +70,23 @@ app = FastAPI(
     A high-performance API for converting geospatial coordinates between different 
     coordinate reference systems and height datums.
     
-    **Key Features:**
+    Key Features:
     - WGS84 ↔ UTM Zone 40S coordinate transformations
     - Ellipsoidal ↔ Orthometric height conversions using EGM2008 geoid model
     - Batch processing via CSV/Excel file uploads
     - Comprehensive error handling and validation
     - Interactive API documentation
     
-    **Supported Transformations:**
+    Supported Transformations:
     - Geographic (EPSG:4326) to/from Projected (EPSG:32740)
     - Height datum conversions using geoid separation
     """,
     version="1.0.0",
     terms_of_service="https://github.com/twaheedgj/Conversion-API",
     contact={
-        "name": "API Support",
+        "name": "Talha Waheed",
         "url": "https://github.com/twaheedgj/Conversion-API/issues",
-        "email": "support@example.com"
-    },
-    license_info={
-        "name": "MIT License",
-        "url": "https://opensource.org/licenses/MIT"
+        "email": "talhawaheed7807@gmail.com"
     },
     docs_url="/docs",
     redoc_url="/redoc",
@@ -258,45 +283,4 @@ async def api_info():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Could not retrieve API information"
         )
-
-# Include the main router
 app.include_router(router, prefix="", tags=["Coordinate Conversion"])
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Initialize API and validate configuration on startup."""
-    logger.info("Starting Geospatial Coordinate Conversion API v1.0.0")
-    
-    # Validate geoid model on startup
-    try:
-        from services.geoid_handler import validate_geoid_model
-        geoid_info = validate_geoid_model(settings.GEOID_PATH)
-        logger.info(f"Geoid model validated: {geoid_info['file_path']}")
-    except Exception as e:
-        logger.warning(f"Geoid model validation failed: {e}")
-        logger.warning("API will start but height conversions may fail")
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on shutdown."""
-    logger.info("Shutting down Geospatial Coordinate Conversion API")
-    
-    # Clear any caches
-    try:
-        from services.geoid_handler import clear_geoid_cache
-        clear_geoid_cache()
-        logger.info("Cleared geoid model cache")
-    except Exception as e:
-        logger.warning(f"Error clearing cache: {e}")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
