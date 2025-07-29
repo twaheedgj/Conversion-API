@@ -168,4 +168,4 @@ MIT License – feel free to use, fork, and contribute!
 
 ## 🤛 Need Help?
 
-Feel free to [open an issue](https://github.com/your-username/geospatial-api/issues) or message the maintainer.
+Feel free to [open an issue](https://github.com/twaheedgj/i/issues) or message the maintainer.
