@@ -1,104 +1,105 @@
-# 🌍 Geospatial Coordinate Conversion API
+# Geospatial Coordinate Conversion API
 
-A FastAPI-based service to convert geospatial coordinates between horizontal and vertical coordinate systems. Supports:
+A high-performance FastAPI-based service for converting geospatial coordinates between different coordinate reference systems and height datums. The API provides precise transformations between:
 
-* WGS84 (EPSG:4326) ↔ UTM Zone 40S (EPSG:32740)
-* Ellipsoidal ↔ Orthometric height (via EGM2008 geoid model)
+* **Horizontal Systems**: WGS84 (EPSG:4326) ↔ UTM Zone 40S (EPSG:32740)
+* **Vertical Systems**: Ellipsoidal ↔ Orthometric height using EGM2008 geoid model
 
 ---
 
-## 🛠️ Features
+## Key Features
 
-* 🔁 **Single-point conversion:**
+* **Coordinate System Transformations**:
+  - WGS84 Geographic → UTM Zone 40S Projected + Orthometric height
+  - UTM Zone 40S Projected + Orthometric height → WGS84 Geographic + Ellipsoidal height
 
-  * WGS84 → UTM40S + Orthometric height
-  * UTM40S + Orthometric height → WGS84 + Ellipsoidal height
-* 📅 **Batch conversion via CSV/Excel file**
-* 📏 Uses geoid model (EGM2008) for accurate height transformation
-* ✅ Ellipsoidal/Orthometric height input is optional (fallback to geoid-based estimation)
-* ⚡ Built with FastAPI for speed and scalability
+* **Batch Processing**: Upload CSV/Excel files for bulk coordinate conversion
+* **Precision Height Conversion**: Utilizes EGM2008 geoid model for accurate height transformations
+* **Flexible Input Validation**: Height parameters are optional with intelligent fallback mechanisms
+* **High Performance**: Built on FastAPI framework for optimal speed and scalability
+* **Interactive Documentation**: Auto-generated API documentation with Swagger UI
 
 ---
 
 ## 📂 Project Structure
 
 ```
-.
-├── app/
-│   ├── main.py
-│   ├── routes.py
-│   ├── models.py
-│   ├── config.py
-│   ├── services/
-│   │   ├── crs_transformer.py
-│   │   ├── height_converter.py
-│   │   └── geoid_handler.py
-│   └── geoid_models/
-│       └── us_nga_egm2008_1.tif   ← Your geoid model
+Conversion-API/
+├── main.py
+├── routes.py
+├── models.py
+├── config.py
+├── .env                         ← Environment configuration
+├── services/
+│   ├── crs_transformer.py
+│   ├── height_converter.py
+│   └── geoid_handler.py
+├── geoid_models/
+│   └── us_nga_egm2008_1.tif   ← Your geoid model
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## 🚀 How to Run
+## Installation and Setup
 
-### 1. Clone the repo
+### Prerequisites
+- Python 3.10 or higher
+- Git
+
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/twaheedgj/Conversion-API.git
-cd geospatial-api
+cd Conversion-API
 ```
 
-### 2. Install dependencies
+### Step 2: Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Set geoid path in `config.py`
+### Step 3: Environment Configuration
 
-```python
-GEOID_PATH = "geoid_models/us_nga_egm2008_1.tif"
+Configure the geoid model path in your environment file:
+
+```env
+GEOID_PATH=geoid_models/us_nga_egm2008_1.tif
 ```
 
-### 4. Start the server
+### Step 4: Launch Application
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn main:app --reload
 ```
 
-Visit: [http://localhost:8000/docs](http://localhost:8000/docs)
+**Access Points:**
+- API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Alternative Docs: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- Health Check: [http://localhost:8000/](http://localhost:8000/)
 
 ---
 
-## 📢 API Endpoints
+## API Reference
 
-### 🔹 `POST /convert/wgs84-to-utm40s`
+### Coordinate Conversion Endpoints
 
-Convert WGS84 (lat/lon + optional ellipsoid height) → UTM40S + orthometric height
+#### `POST /convert/wgs84-to-utm40s`
 
-#### Sample Input:
+Transforms WGS84 geographic coordinates to UTM Zone 40S projected coordinates with orthometric height.
 
+**Request Body:**
 ```json
 {
   "latitude": 24.8607,
   "longitude": 67.0011,
-  "ellipsoid_height": 85
+  "ellipsoid_height": 85    // Optional
 }
 ```
 
-#### Sample Input (without height):
-
-```json
-{
-  "latitude": 24.8607,
-  "longitude": 67.0011
-}
-```
-
-#### Sample Output:
-
+**Response:**
 ```json
 {
   "easting": 1513689.5543600176,
@@ -108,33 +109,20 @@ Convert WGS84 (lat/lon + optional ellipsoid height) → UTM40S + orthometric hei
 }
 ```
 
----
+#### `POST /convert/utm40s-to-wgs84`
 
-### 🔹 `POST /convert/utm40s-to-wgs84`
+Transforms UTM Zone 40S projected coordinates to WGS84 geographic coordinates with ellipsoidal height.
 
-Convert UTM40S + optional orthometric height → WGS84 + ellipsoid height
-
-#### Sample Input:
-
+**Request Body:**
 ```json
 {
   "easting": 345678,
   "northing": 2754321,
-  "orthometric_height": 50
+  "orthometric_height": 50    // Optional
 }
 ```
 
-#### Sample Input (without height):
-
-```json
-{
-  "easting": 345678,
-  "northing": 2754321
-}
-```
-
-#### Sample Output:
-
+**Response:**
 ```json
 {
   "latitude": 24.8607,
@@ -144,69 +132,122 @@ Convert UTM40S + optional orthometric height → WGS84 + ellipsoid height
 }
 ```
 
----
+### Batch Processing Endpoints
 
-### 🔹 `POST /upload/wgs84-to-utm40s`
+#### `POST /upload/wgs84-to-utm40s`
 
-Upload CSV/Excel with WGS84 data and receive UTM + orthometric height.
+Processes CSV/Excel files containing WGS84 coordinates and returns converted UTM coordinates.
 
-Required columns: `latitude`, `longitude`, `ellipsoid_height`
+**Required Columns:** `latitude`, `longitude`, `ellipsoid_height`
 
----
+#### `POST /upload/utm40s-to-wgs84`
 
-### 🔹 `POST /upload/utm40s-to-wgs84`
+Processes CSV/Excel files containing UTM coordinates and returns converted WGS84 coordinates.
 
-Upload CSV/Excel with UTM data and receive WGS84 + ellipsoid height.
-
-Required columns: `easting`, `northing`
-Optional: `orthometric_height`
+**Required Columns:** `easting`, `northing`  
+**Optional Columns:** `orthometric_height`
 
 ---
 
-## 📁 Sample CSV Format
+## Data Format Specifications
 
-**For `/upload/utm40s-to-wgs84`:**
+### CSV File Format Examples
 
-```csv
-easting,northing,orthometric_height
-345000,2750000,50
-346000,2751000,
-```
-
-**For `/upload/wgs84-to-utm40s`:**
-
+**WGS84 to UTM Conversion:**
 ```csv
 latitude,longitude,ellipsoid_height
 24.8607,67.0011,85
+25.2048,67.0308,92.5
 ```
 
----
+**UTM to WGS84 Conversion:**
+```csv
+easting,northing,orthometric_height
+345000,2750000,50
+346000,2751000,52.3
+```
 
-## ⚙️ Tech Stack
-
-* 🐍 Python 3.10+
-* ⚡ FastAPI
-* 📦 Pydantic
-* 📊 Pandas
-* 🌍 Pyproj, Rasterio (for CRS + geoid transformation)
-
----
-
-## 📌 To-Do / Future Enhancements
-
-* 🌐 Support more CRS zones (EPSG codes)
-* 📊 Visualization of coordinates on map
-* 🔒 Authentication for secure API access
-* 📅 Store/upload custom geoid files
+### Supported File Types
+- CSV (Comma-separated values)
+- Excel (.xlsx, .xls)
 
 ---
 
-## 📃 License
+## Technology Stack
 
-MIT License – feel free to use, fork, and contribute!
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Web Framework** | FastAPI | High-performance async API framework |
+| **Data Validation** | Pydantic | Request/response model validation |
+| **Data Processing** | Pandas | CSV/Excel file processing and manipulation |
+| **Coordinate Transformation** | PyProj | Coordinate reference system transformations |
+| **Geospatial Processing** | Rasterio | Geoid model data access and interpolation |
+| **Runtime** | Python 3.10+ | Core application runtime |
 
 ---
 
-## 🤛 Need Help?
+## Development Roadmap
 
-Feel free to [open an issue](https://github.com/twaheedgj/Conversion-API/issues) or message the maintainer.
+### Planned Enhancements
+- [ ] **Extended CRS Support**: Additional coordinate reference systems (EPSG codes)
+- [ ] **Interactive Mapping**: Web-based coordinate visualization
+- [ ] **Authentication System**: Secure API access controls
+- [ ] **Custom Geoid Support**: User-uploadable geoid models
+- [ ] **Performance Optimization**: Enhanced processing for large datasets
+- [ ] **API Versioning**: Backwards-compatible API evolution
+
+### Contributing
+We welcome contributions! Please see our [contribution guidelines](CONTRIBUTING.md) for details on:
+- Code standards and style guides
+- Pull request procedures
+- Issue reporting templates
+- Development environment setup
+
+---
+
+## Related Projects
+
+### Frontend Application
+A companion web interface is available for interactive coordinate conversion:
+
+**Repository**: [Conversion-API-UI](https://github.com/twaheedgj/Conversion-API-UI)
+
+**Features:**
+- Intuitive web interface for coordinate conversion
+- Interactive map visualization with coordinate plotting
+- Drag-and-drop file upload with real-time processing
+- Responsive design for desktop and mobile devices
+
+---
+
+## Geoid Model Reference
+
+### EGM2008 Implementation Details
+
+| Specification | Value |
+|---------------|-------|
+| **Model Name** | Earth Gravitational Model 2008 (EGM2008) |
+| **Source Authority** | U.S. National Geospatial-Intelligence Agency (NGA) |
+| **Spatial Resolution** | 1° × 1° geographic grid |
+| **Global Coverage** | Worldwide |
+| **Data Source** | [Agisoft Geoids Collection](https://www.agisoft.com/downloads/geoids/) |
+| **File Format** | GeoTIFF (.tif) |
+| **Local Filename** | `us_nga_egm2008_1.tif` |
+
+
+## Support and Community
+
+### Getting Help
+- **Documentation**: Comprehensive API docs at `/docs` endpoint
+- **Issues**: [GitHub Issues](https://github.com/twaheedgj/Conversion-API/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/twaheedgj/Conversion-API/discussions)
+
+### Reporting Issues
+When reporting issues, please include:
+- API version and endpoint used
+- Sample input data and expected output
+- Error messages and response codes
+- System environment details
+
+### Contact
+For direct inquiries, please contact the maintainer through GitHub.
